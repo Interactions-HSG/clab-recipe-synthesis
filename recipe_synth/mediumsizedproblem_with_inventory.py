@@ -14,7 +14,8 @@ and(c_id, s_sid) == True
 stock_2_inc(s_sid) = 1.5
 """
 IDableType = UserType("IDableType")
-id = Fluent("id", BoolType(), id=IDableType)
+# id = Fluent("id", BoolType(), id=IDableType)
+osid = Fluent("osid", IntType(), id=IDableType)
 
 CounterType = UserType('CounterType', father=IDableType)
 c_value = Fluent('c_value', IntType(), m=CounterType)
@@ -30,7 +31,8 @@ IncrementStockMappingType = BoolType()
 # inc_2_stock = Fluent("inc_2_stock", BoolType(), cid=CounterType, sid=StockType)
 stock_2_inc = Fluent("stock_2_inc", IntType(), sid=StockType)
 
-counter2stock = Fluent("counter2stock", IntType(), cid=CounterType)
+# mapStock2Counter = Fluent("mapStock2Counter", BoolType, s=StockType)
+
 
 
 
@@ -51,8 +53,9 @@ blk = inc.parameter('blk')
 # ism = inc.parameter("ism")
 # inc.add_precondition(GE(stock_value(blk), 1))
 inc.add_precondition(LE(c_value(c), 10))
-# inc.add_precondition(Equals(inc_2_stock(blk)))
+inc.add_precondition(Equals(osid(c), osid(blk)))
 inc.add_increase_effect(c_value(c), inc_value(ic))
+# inc.add_increase_effect(c_value(c), stock_2_inc(ic))
 # inc.add_decrease_effect(stock_value(blk), 1)
 
 # dec = InstantaneousAction('decrement',c=Counter)
@@ -72,14 +75,15 @@ problem = Problem('CounterWithInventory')
 
 problem.add_fluent(c_value, default_initial_value=0)
 problem.add_fluent(inc_value, default_initial_value=1)
-# problem.add_fluent(stock_value, default_initial_value=0)
+problem.add_fluent(stock_value, default_initial_value=0)
 problem.add_fluent(stock_2_inc, default_initial_value=0)
+problem.add_fluent(osid, default_initial_value=0)
 
 domain_objects_names = []
 domain_objects = {}
 
-
-for id in range(3):
+NOBJ = 3
+for id in range(NOBJ):
     domain_objects_names.append(f"c{id}")
     domain_objects_names.append(f"stock{id}")
 
@@ -88,7 +92,6 @@ for dobjn in domain_objects_names:
         domain_objects.update({dobjn: Object(dobjn, StockType)})
     elif dobjn.startswith("c"):
         domain_objects.update({dobjn: Object(dobjn, CounterType)})
-    # creat IDs for stock and counter
 
 I = Object("inc", IncrementalType)
 domain_objects.update({I.name: I})
@@ -96,8 +99,17 @@ problem.add_objects(domain_objects.values())
 
 problem.add_action(inc)
 problem.add_action(dec)
+
 problem.set_initial_value(inc_value(I), 1)
-problem.set_initial_value(stock_2_inc(domain_objects["stock0"]), 0)
+for obj_id in range(NOBJ):
+    problem.set_initial_value(stock_2_inc(domain_objects[f"stock{obj_id}"]), obj_id)
+    problem.set_initial_value(osid(domain_objects[f"stock{obj_id}"]), obj_id)
+    problem.set_initial_value(osid(domain_objects[f"c{obj_id}"]), obj_id)
+# Not looped since they shall have different values
+problem.set_initial_value(stock_value(domain_objects["stock0"]), 5) 
+problem.set_initial_value(stock_value(domain_objects["stock1"]), 4) 
+problem.set_initial_value(stock_value(domain_objects["stock2"]), 3) 
+
 # problem.add_goal(And( GE(value(C2),Plus(value(C1),1)), GE(value(C1),Plus(value(C0),1))))
 problem.add_goal(GE(Plus(
     Plus(c_value(domain_objects["c0"]),c_value(domain_objects["c1"])),c_value(domain_objects["c2"])), 18))
