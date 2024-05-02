@@ -6,6 +6,7 @@ from unified_planning.shortcuts import *
 from unified_planning.model.metrics import MinimizeSequentialPlanLength
 
 import to_pddl
+import plan_goal_simulator
 
 
 """
@@ -106,5 +107,7 @@ with OneshotPlanner(name='enhsp') as planner:
     if plan is not None:
         print("%s returned:" % planner.name)
         print(plan)
+        with SequentialSimulator(problem=problem) as sim:
+            plan_goal_simulator.simulate(plan, sim, problem)
     else:
         print("No plan found.")
