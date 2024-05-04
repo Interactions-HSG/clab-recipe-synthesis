@@ -12,102 +12,99 @@ import plan_goal_simulator
 """
 This is a simple mock to show how a shape (piece) can be approximated using AI planning
 """
-ShapeType = UserType("ShapeType")
-BlockVarType = UserType("BlockVarType", father=ShapeType)
-BlockInvType = UserType("BlockInvType")
-PieceType = UserType('PieceType', father=ShapeType)
+NPIXEL_X = 4
+NPIXEL_Y = 4
+problem = Problem('PieceToBlock')
 
-dim_x = Fluent("dim_x", IntType(), dimx=ShapeType)
-dim_y = Fluent("dim_y", IntType(), dimy=ShapeType)
-block_inv = Fluent("block_inv", IntType(), blk=BlockVarType)
+Pixel = UserType("Pixel")
+pos_x = Fluent("pos_x", IntType(), s=Pixel)
+problem.add_fluent(pos_x, default_initial_value=0)
+pos_y = Fluent("pos_y", IntType(), s=Pixel)
+problem.add_fluent(pos_y, default_initial_value=0)
+domain_obj_names = []
+domain_objs = {}
+pixel_objs = {}
+for px_x in range(NPIXEL_X):
+    for px_y in range(NPIXEL_Y):
+        name = f"px_{px_x}_{px_y}"
+        domain_obj_names.append(name)
+        obj = problem.add_object(name, Pixel)
+        domain_objs.update({name: obj})
+        pixel_objs.update({name: obj})
+        problem.set_initial_value(pos_x(obj), px_x)
+        problem.set_initial_value(pos_y(obj), px_y)
 
 
+function_count = Fluent("function_count", IntType())
+occupied = Fluent("occupied", BoolType(), s=Pixel)
+problem.add_fluent(occupied, default_initial_value=False)
+# BlockVarType = UserType("BlockVarType")
+# BlockInvType = UserType("BlockInvType")
+# block_inv = Fluent("block_inv", IntType(), blk=BlockVarType)
 
-inc_x = InstantaneousAction(
-    'attach_x',
-    blk=BlockVarType,
-    p=PieceType
-)
-blk = inc_x.parameter('blk')
-p = inc_x.parameter('p')
-# there is at least one fabric block left in the inventory
-inc_x.add_precondition(GE(block_inv(blk), 1))
-inc_x.add_increase_effect(dim_x(p), dim_x(blk)) # the piece grows in x ...
-inc_x.add_increase_effect(dim_y(p), dim_y(blk), Equals(0,dim_y(p))) # and y but only if it is the first block
-inc_x.add_decrease_effect(block_inv(blk), 1) # ... but our inventory shrinks
 
-inc_y = InstantaneousAction(
-    'attach_y',
-    blk=BlockVarType,
-    p=PieceType
-)
-blk = inc_y.parameter('blk')
-p = inc_y.parameter('p')
-# there is at least one fabric block left in the inventory
-inc_y.add_precondition(GE(block_inv(blk), 1))
-inc_y.add_increase_effect(dim_x(p), dim_x(blk)) # the piece grows in y ...
-inc_y.add_increase_effect(dim_x(p), dim_x(blk), Equals(0,dim_x(p))) # and x but only if it is the first block
-inc_y.add_decrease_effect(block_inv(blk), 1) # ... but our inventory shrinks
+# block_size_x = Fluent("block_size_x", IntType(), blk=BlockVarType)
+# block_1_obj = Object("BlockVar_1", BlockVarType)
+# problem.add_fluent(block_size_x, default_initial_value=1)
+# problem.set_initial_value(block_size_x(block_1_obj), 1)
 
-problem = Problem('BlockToPieceWithInventory')
+# occupies_x = Fluent("occupies_x", IntType(), blk=BlockVarType)
+# occupies_y = Fluent("occupies_y", IntType(), blk=BlockVarType)
 
-problem.add_fluents([
-    dim_x, dim_y, block_inv
+
+# pixel_1_Obj = Object("pixel_00", Pixel)
+# pixel_2_Obj = Object("pixel_01", Pixel)
+# problem.add_fluent(pos_x, default_initial_value=0)
+# problem.add_fluent(pos_y, default_initial_value=0)
+# problem.set_initial_value(pos_x(pixel_1_Obj), 0)
+# problem.set_initial_value(pos_y(pixel_1_Obj), 0)
+
+def make_goal_fn():
+    goal_fn = InstantaneousAction(
+        "goal_fn",
+        # blk=BlockVarType,
+        start_px=Pixel
+    )
+    # blk = goal_fn.parameter("blk")
+    start_px = goal_fn.parameter("start_px")
+    goal_fn.add_increase_effect(function_count, 1)
+    # condition_forall(
+    #     LE(
+    #         pos_x(p),
+    #         pos_x(start_pixel) + block_size_x(blk)
+    #     ),
+    #     (occupied(Variable("p", Pixel)) for _ in range(10))
+    # )
+    
+    # forall_vars = {"p": Variable("p", Pixel)}
+    # p = Variable("p", Pixel) 
+
+    goal_fn.add_effect(
+        # occupied(p),
+        occupied(start_px),
+        True,
+        # forall=(p,),
+        # condition=(Not(occupied(p)))
+    )
+    return goal_fn
+
+goal_fn = make_goal_fn()
+
+problem.add_actions([
+    goal_fn
 ])
 
-# Needed objects
-# 2x Blocks of variant 1
-# 1x Block of variant 2
-# 1x Piece
-NBLOCKSVAR1 = 2
-NBLOCKSVAR2 = 1
-NVARS = 2
-BLOCKNAME = "BlockVar"
-INVNAME = "BlockInv"
 
-domain_objects_names = []
-domain_objects = {}
+problem.add_fluents([
+    function_count
+])
+problem.set_initial_value(function_count, 0)
 
-# for var in range(NVARS):
-#     for num in range(NBLOCKSVAR1):
-#         name = f"{BLOCKNAME}_{var}_{num}"
-#         domain_objects.update({name: Object(name, BlockVarType)})
-#         dobj = problem.add_object(f"{BLOCKNAME}_{var}_{num}", BlockVarType)
-#         if 0 == var:
-#             problem.set_initial_value(dim_x(dobj), 1)
-#             problem.set_initial_value(dim_y(dobj), 1)
-#             problem.set_initial_value(block_inv(dobj), NBLOCKSVAR1)
-#         elif 1 == var:
-#             problem.set_initial_value(dim_x(dobj), 2)
-#             problem.set_initial_value(dim_y(dobj), 1)
-#             problem.set_initial_value(block_inv(dobj), NBLOCKSVAR2)
-blkvar1 = problem.add_object(f"{BLOCKNAME}_{1}", BlockVarType)
-problem.set_initial_value(dim_x(blkvar1),1)
-problem.set_initial_value(dim_y(blkvar1),1)
-problem.add_object(f"{INVNAME}_{1}", BlockInvType)
-problem.set_initial_value(block_inv(blkvar1), 2)
-
-blkvar2 = problem.add_object(f"{BLOCKNAME}_{2}", BlockVarType)
-problem.set_initial_value(dim_x(blkvar2),1)
-problem.set_initial_value(dim_y(blkvar2),2)
-problem.add_object(f"{INVNAME}_{2}", BlockInvType)
-problem.set_initial_value(block_inv(blkvar2), 1)
-
-p = problem.add_object("Piece", PieceType)
-problem.set_initial_value(dim_x(p), 0)
-problem.set_initial_value(dim_y(p), 0)
-
-# pcur = problem.add_object("PieceCurrent", PieceCurrentType)
-# problem.set_initial_value(dim_x(pcur), 0)
-# problem.set_initial_value(dim_y(pcur), 0)
-
-problem.add_action(inc_x)
-problem.add_action(inc_y)
-
+px = Variable("px", Pixel)
 problem.add_goal(
     And(
-        Equals(dim_x(p), 2),
-        Equals(dim_y(p), 2)
+        Forall(occupied(px), px),
+        GE(function_count, 5)
     )
 )
 
@@ -121,6 +118,6 @@ with OneshotPlanner(name='enhsp') as planner:
         print("%s returned:" % planner.name)
         print(plan)
         with SequentialSimulator(problem=problem) as sim:
-            plan_goal_simulator.simulate_fb(plan, sim, problem)
+            plan_goal_simulator.simulate(plan, sim, problem)
     else:
         print("No plan found.")
