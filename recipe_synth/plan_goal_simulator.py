@@ -76,6 +76,9 @@ def simulate_b2p(
             rows.append(row)
     
     df = pd.DataFrame(rows, columns=headers)
+    pd.set_option('display.max_rows', 999)
+    pd.set_option('display.max_columns', 999)
+    pd.set_option('display.width', 999)
     print("\n")
     print(df)
 
