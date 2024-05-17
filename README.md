@@ -10,14 +10,9 @@ The implementation uses [unified-planning](https://unified-planning.readthedocs.
 
 ## Evaluation
 
-The result can be visualized using the `plan_goal_simulator`:
+### Planner Result
 
-|symbol|meaning|
-|-------|-------|
-|xn | x coordinate with value n of a cell|
-|yn | y coordinate with value n of a cell|
-|bm | block of type m|
-|#bm| block inventory of type m|
+The result can be visualized using the `plan_goal_simulator`:
 
 ```text
 enhsp returned:
@@ -53,6 +48,17 @@ SequentialPlan:
 22                          y2  b2  b2  b2  b2        
 23                          y3  b2  b2  b2  b2        
 ```
+
+### Legend
+
+|symbol|meaning|
+|-------|-------|
+|xn | x coordinate with value n of a cell|
+|yn | y coordinate with value n of a cell|
+|bm | block of type m|
+|#bm| block inventory of type m|
+
+### Discussion
 
 The output shows that the planner found a plan. Inventory was respected. This minimalistic demonstration on how the recipe synthesis can be modeled as planning problem. 
 

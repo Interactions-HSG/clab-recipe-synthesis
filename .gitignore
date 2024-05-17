@@ -4,8 +4,8 @@
 !recipe_synth/
 !recipe_synth/*
 
-!recipe_synth/dash/
-!recipe_synth/dash/*
+!recipe_synth/app/
+!recipe_synth/app/*
 
 !doc
 !doc/assets
