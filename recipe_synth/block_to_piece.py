@@ -5,8 +5,7 @@ from pathlib import Path as plibPath
 from unified_planning.shortcuts import *
 from unified_planning.model.metrics import MinimizeSequentialPlanLength
 
-import to_pddl
-import plan_goal_simulator
+from recipe_synth import to_pddl, plan_goal_simulator
 
 
 """
@@ -165,16 +164,24 @@ problem.add_goal(
     )
 )
 
-print(problem)
 to_pddl.export(problem, plibPath("benchmarks") / os.path.basename(__file__).strip(".py"))
 
-with OneshotPlanner(name='enhsp') as planner:
-    result = planner.solve(problem)
-    plan = result.plan
-    if plan is not None:
-        print("%s returned:" % planner.name)
-        print(plan)
-        with SequentialSimulator(problem=problem) as sim:
-            plan_goal_simulator.simulate_b2p(plan, sim, problem)
-    else:
-        print("No plan found.")
+def run_planner(should_run_simulation: Bool = True):
+    with OneshotPlanner(name='enhsp') as planner:
+        result = planner.solve(problem)
+        plan = result.plan
+        if plan:
+            print("%s returned:" % planner.name)
+            print(plan)
+            if should_run_simulation:
+                with SequentialSimulator(problem=problem) as sim:
+                    df = plan_goal_simulator.simulate_b2p(plan, sim, problem)
+                    print("\n")
+                    print(df)
+        else:
+            print("No plan found.")
+    
+    return problem, plan
+
+if __name__ == "__main__":
+    run_planner()
