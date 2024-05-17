@@ -5,7 +5,7 @@ from unified_planning.shortcuts import SequentialSimulator
 from recipe_synth import block_to_piece, plan_goal_simulator
 
 def get_callbacks(app):
-    @app.long_callback(
+    @app.callback(
     [
         Output("planner-output", "children"),
     ],
@@ -14,6 +14,7 @@ def get_callbacks(app):
         (Output("button", "disabled"), True, False),
         (Output("cancel_button", "disabled"), False, True),
     ],
+    background=True,
     cancel=[Input("cancel_button", "n_clicks")],
     progress=[Output("update-output", "children")],
     prevent_initial_call=True
