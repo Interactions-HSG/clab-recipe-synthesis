@@ -1,0 +1,12 @@
+*
+!.gitignore
+
+!recipe_synth/
+!recipe_synth/*
+
+!recipe_synth/dash/
+!recipe_synth/dash/*
+
+!doc
+!doc/assets
+!doc/assets/*
