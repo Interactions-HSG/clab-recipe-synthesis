@@ -25,6 +25,7 @@ ipykernel = "^6.29.4"
 
 
 [tool.poetry.extras]
+# tabulate is optional for pandas but only specified in the option "all"
 dash = ["dash", "tabulate"]
 
 [build-system]
